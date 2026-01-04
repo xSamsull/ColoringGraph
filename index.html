@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penjadwalan Kereta dengan Graph Coloring</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            border-radius: 10px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .content {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .input-section, .result-section {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        h2 {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #fdbb2d;
+            color: #1a2a6c;
+        }
+        
+        .train-input {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            position: relative;
+        }
+        
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .delete-btn:hover {
+            background: #c82333;
+        }
+        
+        .input-group {
+            margin-bottom: 10px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            background: white;
+            color: #495057;
+        }
+        
+        button {
+            padding: 12px 20px;
+            background: #fdbb2d;
+            color: #1a2a6c;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #ffa500;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .result {
+            margin-top: 20px;
+        }
+        
+        .color-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 10px;
+            display: inline-block;
+        }
+        
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        
+        .schedule-table th, .schedule-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .schedule-table th {
+            background: #1a2a6c;
+            color: white;
+        }
+        
+        .conflict-list {
+            margin-top: 20px;
+        }
+        
+        .conflict-item {
+            background: rgba(255, 100, 100, 0.1);
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        /* Graph Style */
+        .graph-container {
+            width: 100%;
+            height: 400px;
+            margin-top: 20px;
+            border-radius: 10px;
+            background: white;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .node {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            font-weight: bold;
+            transition: all 0.5s ease;
+            text-align: center;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: 2px solid white;
+            z-index: 2;
+        }
+
+        .edge {
+            position: absolute;
+            height: 2px;
+            background-color: #6c757d;
+            transform-origin: 0 0;
+            z-index: 1;
+        }
+        
+        .edge-label {
+            position: absolute;
+            color: #495057;
+            font-size: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2px 5px;
+            border-radius: 3px;
+            z-index: 2;
+            border: 1px solid #dee2e6;
+        }
+
+        /* Visual Elements */
+        .color-0 { background-color: #ff6b6b; color: white; }
+        .color-1 { background-color: #51cf66; color: white; }
+        .color-2 { background-color: #339af0; color: white; }
+        .color-3 { background-color: #fcc419; color: black; }
+        
+        .graph-title {
+            text-align: center;
+            margin: 30px 0 10px;
+            font-size: 1.5rem;
+            color: #1a2a6c;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #fdbb2d;
+        }
+        
+        .no-conflicts {
+            color: #51cf66;
+            font-weight: bold;
+            padding: 10px;
+            background: rgba(81, 207, 102, 0.1);
+            border-radius: 4px;
+        }
+        
+        .train-count {
+            display: inline-block;
+            background: #1a2a6c;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            text-align: center;
+            line-height: 24px;
+            margin-left: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Penjadwalan Kereta dengan Graph Coloring</h1>
+            <p class="description">
+                Aplikasi ini menggunakan algoritma Graph Coloring untuk menjadwalkan kereta berdasarkan waktu keberangkatan, kedatangan, dan jalur yang digunakan.
+                Setiap warna mewakili waktu yang berbeda untuk menghindari konflik penjadwalan.
+            </p>
+        </header>
+        
+        <div class="content">
+            <div class="input-section">
+                <h2>Input Data Kereta <span class="train-count" id="train-count">4</span></h2>
+                
+                <div id="train-inputs">
+                    <!-- Train inputs will be generated here -->
+                </div>
+                
+                <div class="actions">
+                    <button id="calculate-btn">Hitung Penjadwalan</button>
+                    <button id="add-train-btn">Tambah Kereta</button>
+                </div>
+            </div>
+            
+            <div class="result-section">
+                <h2>Hasil Penjadwalan</h2>
+                
+                <div class="result">
+                    <h3>Jadwal Kereta</h3>
+                    <table class="schedule-table">
+                        <thead>
+                            <tr>
+                                <th>Kereta</th>
+                                <th>Jalur</th>
+                                <th>Keberangkatan</th>
+                                <th>Kedatangan</th>
+                                <th>Warna (Slot Waktu)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedule-body">
+                            <!-- Results will be inserted here -->
+                        </tbody>
+                    </table>
+                    
+                    <h3>Konflik yang Ditemukan</h3>
+                    <div id="conflicts" class="conflict-list">
+                        <!-- Conflicts will be listed here -->
+                    </div>
+                    
+                    <!-- Graph Visualization -->
+                    <h3 class="graph-title">Visualisasi Graph Konflik</h3>
+                    <div class="graph-container" id="graph-container">
+                        <!-- Graph nodes and edges will be dynamically inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const calculateBtn = document.getElementById('calculate-btn');
+            const addTrainBtn = document.getElementById('add-train-btn');
+            const trainInputsContainer = document.getElementById('train-inputs');
+            const scheduleBody = document.getElementById('schedule-body');
+            const conflicts = document.getElementById('conflicts');
+            const graphContainer = document.getElementById('graph-container');
+            const trainCountElement = document.getElementById('train-count');
+            
+            let trainCount = 0;
+            let trainsData = [];
+            
+            // Initialize with 4 trains
+            for (let i = 0; i < 4; i++) {
+                addTrain();
+            }
+            
+            // Add event listeners
+            calculateBtn.addEventListener('click', calculateSchedule);
+            addTrainBtn.addEventListener('click', addTrain);
+            
+            // Function to add a new train input
+            function addTrain() {
+                if (trainCount >= 8) {
+                    alert("Maksimal 8 kereta saja.");
+                    return;
+                }
+                
+                trainCount++;
+                const trainId = trainCount;
+                trainsData.push({
+                    id: trainId,
+                    name: `Kereta ${trainId}`,
+                    departure: '08:00',
+                    arrival: '09:00',
+                    track: 'A'
+                });
+                
+                updateTrainInputs();
+                updateTrainCount();
+            }
+            
+            // Function to remove a train
+            function removeTrain(id) {
+                if (trainCount <= 1) {
+                    alert("Minimal harus ada 1 kereta.");
+                    return;
+                }
+                
+                trainsData = trainsData.filter(train => train.id !== id);
+                trainCount--;
+                
+                updateTrainInputs();
+                updateTrainCount();
+                
+                // Recalculate schedule if we have trains
+                if (trainCount > 0) {
+                    calculateSchedule();
+                } else {
+                    clearResults();
+                }
+            }
+            
+            // Update train inputs in the DOM
+            function updateTrainInputs() {
+                trainInputsContainer.innerHTML = '';
+                
+                trainsData.forEach(train => {
+                    const trainInput = document.createElement('div');
+                    trainInput.className = 'train-input';
+                    trainInput.innerHTML = `
+                        <button class="delete-btn" onclick="removeTrain(${train.id})">×</button>
+                        <div class="input-group">
+                            <label for="train${train.id}">Nama Kereta</label>
+                            <input type="text" id="train${train.id}" value="${train.name}" 
+                                onchange="updateTrainData(${train.id}, 'name', this.value)">
+                        </div>
+                        <div class="input-group">
+                            <label for="departure${train.id}">Waktu Keberangkatan</label>
+                            <input type="time" id="departure${train.id}" value="${train.departure}" 
+                                onchange="updateTrainData(${train.id}, 'departure', this.value)">
+                        </div>
+                        <div class="input-group">
+                            <label for="arrival${train.id}">Waktu Kedatangan</label>
+                            <input type="time" id="arrival${train.id}" value="${train.arrival}" 
+                                onchange="updateTrainData(${train.id}, 'arrival', this.value)">
+                        </div>
+                        <div class="input-group">
+                            <label for="track${train.id}">Jalur</label>
+                            <select id="track${train.id}" onchange="updateTrainData(${train.id}, 'track', this.value)">
+                                <option value="A" ${train.track === 'A' ? 'selected' : ''}>Jalur A</option>
+                                <option value="B" ${train.track === 'B' ? 'selected' : ''}>Jalur B</option>
+                                <option value="C" ${train.track === 'C' ? 'selected' : ''}>Jalur C</option>
+                            </select>
+                        </div>
+                    `;
+                    trainInputsContainer.appendChild(trainInput);
+                });
+            }
+            
+            // Update train count display
+            function updateTrainCount() {
+                trainCountElement.textContent = trainCount;
+            }
+            
+            // Clear results
+            function clearResults() {
+                scheduleBody.innerHTML = '';
+                conflicts.innerHTML = '<p class="no-conflicts">Tidak ada data kereta</p>';
+                graphContainer.innerHTML = '';
+            }
+            
+            // Update train data
+            window.updateTrainData = function(id, field, value) {
+                const train = trainsData.find(t => t.id === id);
+                if (train) {
+                    train[field] = value;
+                }
+            }
+            
+            // Remove train function exposed to global scope
+            window.removeTrain = removeTrain;
+            
+            // Function to calculate schedule using graph coloring
+            function calculateSchedule() {
+                // Perform validation
+                for (const train of trainsData) {
+                    if (train.departure >= train.arrival) {
+                        alert(`Error: Waktu keberangkatan ${train.name} harus sebelum waktu kedatangan`);
+                        return;
+                    }
+                }
+                
+                // Create graph adjacency list
+                const graph = {};
+                trainsData.forEach(train => {
+                    graph[train.id] = [];
+                });
+                
+                // Find conflicts (edges in the graph)
+                const conflictList = [];
+                const conflictDetails = [];
+                
+                for (let i = 0; i < trainsData.length; i++) {
+                    for (let j = i + 1; j < trainsData.length; j++) {
+                        const train1 = trainsData[i];
+                        const train2 = trainsData[j];
+                        
+                        // Check if trains share the same track and their schedules overlap
+                        if (train1.track === train2.track && 
+                            timeOverlap(
+                                timeToMinutes(train1.departure), 
+                                timeToMinutes(train1.arrival), 
+                                timeToMinutes(train2.departure), 
+                                timeToMinutes(train2.arrival)
+                            )) {
+                            graph[train1.id].push(train2.id);
+                            graph[train2.id].push(train1.id);
+                            conflictList.push(`${train1.name} dan ${train2.name} di ${train1.track}`);
+                            conflictDetails.push({
+                                from: train1.id,
+                                to: train2.id,
+                                track: train1.track
+                            });
+                        }
+                    }
+                }
+                
+                // Perform graph coloring using greedy algorithm
+                const colors = greedyColoring(graph, trainsData);
+                
+                // Display results
+                displayResults(trainsData, colors, conflictList);
+                
+                // Draw graph visualization
+                drawGraph(trainsData, graph, colors, conflictDetails);
+            }
+            
+            // Convert time string to minutes
+            function timeToMinutes(timeStr) {
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                return hours * 60 + minutes;
+            }
+            
+            // Check if two time intervals overlap
+            function timeOverlap(start1, end1, start2, end2) {
+                return Math.max(start1, start2) < Math.min(end1, end2);
+            }
+            
+            // Greedy graph coloring algorithm
+            function greedyColoring(graph, trains) {
+                const colors = {};
+                const colorNames = [
+                    "Merah (Slot 1)", 
+                    "Hijau (Slot 2)", 
+                    "Biru (Slot 3)", 
+                    "Kuning (Slot 4)",
+                    "Ungu (Slot 5)",
+                    "Cyan (Slot 6)",
+                    "Magenta (Slot 7)",
+                    "Oranye (Slot 8)"
+                ];
+                const colorValues = [
+                    "#ff6b6b", "#51cf66", "#339af0", "#fcc419",
+                    "#9b59b6", "#1abc9c", "#e74c3c", "#f39c12"
+                ];
+                
+                // Assign colors to trains
+                for (const trainId in graph) {
+                    const usedColors = new Set();
+                    
+                    // Mark colors used by adjacent trains (conflicting trains)
+                    for (const neighbor of graph[trainId]) {
+                        if (colors[neighbor] !== undefined) {
+                            usedColors.add(colors[neighbor]);
+                        }
+                    }
+                    
+                    // Find the first available color
+                    let colorIdx = 0;
+                    while (usedColors.has(colorIdx)) {
+                        colorIdx++;
+                    }
+                    
+                    colors[trainId] = colorIdx;
+                }
+                
+                // For trains without conflicts, assign the first color
+                trains.forEach(train => {
+                    if (colors[train.id] === undefined) {
+                        colors[train.id] = 0;
+                    }
+                });
+                
+                // Return both the color index and its representation
+                return Object.keys(colors).reduce((result, trainId) => {
+                    result[trainId] = {
+                        index: colors[trainId],
+                        name: colorNames[colors[trainId]] || `Slot ${colors[trainId] + 1}`,
+                        value: colorValues[colors[trainId]] || "#cccccc"
+                    };
+                    return result;
+                }, {});
+            }
+            
+            // Display the results
+            function displayResults(trains, colors, conflictList) {
+                // Clear previous results
+                scheduleBody.innerHTML = '';
+                conflicts.innerHTML = '';
+                
+                // Add trains to the schedule table
+                trains.forEach(train => {
+                    const row = document.createElement('tr');
+                    const color = colors[train.id];
+                    
+                    row.innerHTML = `
+                        <td>${train.name}</td>
+                        <td>${train.track}</td>
+                        <td>${train.departure}</td>
+                        <td>${train.arrival}</td>
+                        <td>
+                            <span class="color-box" style="background-color: ${color.value}"></span>
+                            ${color.name}
+                        </td>
+                    `;
+                    
+                    scheduleBody.appendChild(row);
+                });
+                
+                // Display conflicts if any
+                if (conflictList.length > 0) {
+                    conflictList.forEach(conflict => {
+                        const conflictItem = document.createElement('div');
+                        conflictItem.className = 'conflict-item';
+                        conflictItem.textContent = conflict;
+                        conflicts.appendChild(conflictItem);
+                    });
+                } else {
+                    conflicts.innerHTML = '<p class="no-conflicts">Tidak ada konflik ditemukan. Jadwal aman!</p>';
+                }
+            }
+            
+            // Draw graph visualization
+            function drawGraph(trains, graph, colors, conflictDetails) {
+                // Clear previous graph
+                graphContainer.innerHTML = '';
+                
+                if (trains.length === 0) return;
+                
+                // Calculate node positions based on number of trains
+                const centerX = 200;
+                const centerY = 200;
+                const radius = 150;
+                
+                const positions = {};
+                trains.forEach((train, index) => {
+                    const angle = (2 * Math.PI * index) / trains.length - Math.PI/2;
+                    positions[train.id] = {
+                        x: centerX + radius * Math.cos(angle),
+                        y: centerY + radius * Math.sin(angle)
+                    };
+                });
+                
+                // Create nodes for each train
+                trains.forEach(train => {
+                    const node = document.createElement('div');
+                    node.className = `node color-${colors[train.id].index}`;
+                    node.style.left = `${positions[train.id].x - 40}px`;
+                    node.style.top = `${positions[train.id].y - 40}px`;
+                    node.textContent = `${train.name}`;
+                    node.setAttribute('data-id', train.id);
+                    graphContainer.appendChild(node);
+                });
+                
+                // Create edges for conflicts
+                conflictDetails.forEach(conflict => {
+                    const fromNode = positions[conflict.from];
+                    const toNode = positions[conflict.to];
+                    
+                    if (!fromNode || !toNode) return;
+                    
+                    // Calculate line properties
+                    const dx = toNode.x - fromNode.x;
+                    const dy = toNode.y - fromNode.y;
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                    
+                    // Create edge line
+                    const edge = document.createElement('div');
+                    edge.className = 'edge';
+                    edge.style.width = `${length}px`;
+                    edge.style.left = `${fromNode.x}px`;
+                    edge.style.top = `${fromNode.y}px`;
+                    edge.style.transform = `rotate(${angle}deg)`;
+                    graphContainer.appendChild(edge);
+                    
+                    // Add edge label (track name)
+                    const label = document.createElement('div');
+                    label.className = 'edge-label';
+                    label.textContent = `Jalur ${conflict.track}`;
+                    label.style.left = `${(fromNode.x + toNode.x) / 2 - 20}px`;
+                    label.style.top = `${(fromNode.y + toNode.y) / 2 - 10}px`;
+                    graphContainer.appendChild(label);
+                });
+            }
+            
+            // Initial calculation
+            calculateSchedule();
+        });
+    </script>
+</body>
+</html>
